@@ -1,4 +1,4 @@
-# Step 4
+# Step 4 ----------------------------------------------------------------------
 
 library(tidyverse)
 library(fixest)
@@ -55,7 +55,7 @@ df_clean <- df_clean %>%
   educ_group = factor(educ_group,
                       levels = c("No College", "Some College", "Bachelor's+")))
 
-# Table 5
+# Table 5 ----------------------------------------------------------------------
 
 datasummary(
   ln_wage + AGE + female ~ educ_group * (Mean + SD),
