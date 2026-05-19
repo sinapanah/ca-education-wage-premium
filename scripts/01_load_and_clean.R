@@ -5,6 +5,7 @@ library(fixest)
 library(modelsummary)
 library(ggplot2)
 library(ipumsr)
+library(estimatr)
 
 setwd("~/ca-education-wage-premium")
 df <- read_csv("data/usa_00001.csv")
@@ -24,10 +25,12 @@ df_clean <- df %>%
   mutate(
     ln_wage = log(INCWAGE),
     educ_group = case_when(
-      EDUC < 73 ~ "No College",
-      EDUC < 111 ~ "Some College",
-      EDUC >= 111 ~ "Bachelor's+"
+      EDUC <= 6 ~ "No College",
+      EDUC <= 9 ~ "Some College",
+      EDUC >= 10 ~ "Bachelor's+"
     ),
+    educ_group = factor(educ_group,
+                        levels = c("No College", "Some College", "Bachelor's+")),
     female = ifelse(SEX == 2, 1, 0),
     race_eth = case_when(
       HISPAN != 0 ~ "Hispanic",
@@ -38,24 +41,9 @@ df_clean <- df %>%
     )
   )
 
-df_clean <- df_clean %>%
-  mutate(educ_group = factor (educ_group,
-                              levels = c("No College", "Some College", "Bachelor's +")))
 
-nrow(df_clean)
 
-library(estimatr)
-
-df_clean <- df_clean %>%
-  mutate(educ_group = case_when(
-    EDUC <= 6 ~ "No College",
-    EDUC <= 9 ~ "Some College",
-    EDUC >= 10 ~ "Bachelor's+"
-  ),
-  educ_group = factor(educ_group,
-                      levels = c("No College", "Some College", "Bachelor's+")))
-
-# Table 5 ----------------------------------------------------------------------
+# Step 5 ----------------------------------------------------------------------
 
 datasummary(
   ln_wage + AGE + female ~ educ_group * (Mean + SD),
@@ -64,7 +52,7 @@ datasummary(
   title = "Summary Statistics by Education Group ~ California ACS 2022"
 )
 
-# Table 6
+# Step 6 ----------------------------------------------------------------------
 
 model_1 <- feols(ln_wage ~ educ_group + AGE + I(AGE^2),
                  data = df_clean, vcov = "HC1")
@@ -78,7 +66,7 @@ model_3 <- feols(ln_wage ~ educ_group + AGE + I(AGE^2) + female + race_eth | OCC
 etable(model_1, model_2, model_3,
        title = "Returns to Education - California ACS 2022")
 
-# Table 6
+# Step 7 ----------------------------------------------------------------------
 
 ggplot(df_clean, aes(x = ln_wage, fill = educ_group)) +
   geom_density(alpha = 0.4) +
